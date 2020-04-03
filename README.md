@@ -16,9 +16,9 @@ Part 1 - Aligning the FASTQ reads, variant calling and compilation of informatio
 3) Run: pipeline.sh projectname
 
 Part 2 - Running ClonalTREE2
-1) Run: python3 ClonalTREE.py <VAF file> <rd file> <out prefix>
-VAF file:	[String] Input file containing the variant allele frequencies matrix (F).
-RD file:	[String] Input file containing the read depth matrix (R).
+1) Run: python3 ClonalTREE.py <VAF file> <rd file> <out prefix>\
+VAF file:	[String] Input file containing the variant allele frequencies matrix (F).\
+RD file:	[String] Input file containing the read depth matrix (R).\
 out prefix:	[String] File path to prefix all output files.
   
 File formats:

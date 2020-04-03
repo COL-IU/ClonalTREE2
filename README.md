@@ -9,6 +9,7 @@ Installation:
 git clone https://github.com/COL-IU/ClonalTREE2.git
 
 Running the program: 
+
 Part 1 - Aligning the FASTQ reads, variant calling and compilation of information in ClonalTREE2 recognizable formats*:
 1) Make sure the FASTQ files are gzipped and named in the following format: projectname_timetag_1.fq.gz, projectname_timetag_2.fq.gz
 2) Make changes to the file path variables and the timetags array appropriately in pipeline.sh
@@ -26,7 +27,6 @@ File formats:
 Example VAF file:
 
 1	2	3	4	5	6	7	8	9	10	11	12	13	14
-
 0.53850	0.51360	0.45410	0.47870	0.62280	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	
 0.43750	0.30560	0.48840	0.26190	0.34430	0.21880	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	
 0.41940	0.35850	0.64000	0.26830	0.28950	0.50000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	
@@ -39,7 +39,6 @@ Example VAF file:
 Example rd file:
 
 1	2	3	4	5	6	7	8	9	10	11	12	13	14
-
 182.00000	220.00000	207.00000	188.00000	289.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	
 32.00000	36.00000	43.00000	42.00000	61.00000	32.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	
 31.00000	53.00000	50.00000	41.00000	38.00000	44.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	0.00000	

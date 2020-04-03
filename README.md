@@ -3,6 +3,7 @@ ClonalTREE2
 Requirements:
 - Interpreters: Python 3, Perl
 - Python libraries: numpy, graphviz
+- Trimmomatic 0.33
 
 Installation: 
 git clone https://github.com/COL-IU/ClonalTREE2.git

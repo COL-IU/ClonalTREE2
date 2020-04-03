@@ -1,14 +1,12 @@
-bin=/data/groups/heewlee/MA/wazim/TimeSeries/FINAL/bin/ClonalTREE2
-ref=/data/groups/heewlee/MA/wazim/TimeSeries/FINAL/util/ecoli.v3
-data=/data/groups/heewlee/MA/wazim/TimeSeries/FINAL/data
-out=/data/groups/heewlee/MA/wazim/TimeSeries/FINAL/out1
-trimmed=/data/groups/heewlee/MA/wazim/TimeSeries/FINAL/trimmed
-TRIMHOME=/data/groups/heewlee/MA/bin/Trimmomatic-0.33/
-TRIMJAR=/data/groups/heewlee/MA/bin/Trimmomatic-0.33/trimmomatic-0.33.jar
+bin=<Directory containing the scripts>
+ref=<Directory containing the genome reference file>
+data=<Directory containing the FASTQ files>
+out=<Output directory>
+trimmed=<Directory to hold trimmed FASTQ files>
+TRIMHOME=<Directory containing Trimmomatic-0.33>
+TRIMJAR=<Path to trimmomatic-0.33.jar>
 
 declare -a arr1=("t1" "t2" "t3" "t4" "t5" "t6")
-
-$1 = pop125
 
 mkdir ${out}/${1}
 mkdir ${trimmed}/${1}

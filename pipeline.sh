@@ -24,6 +24,7 @@ done
 cat ${out}/${1}/${1}_*.freqs > ${out}/${1}/${1}.freqs
 python3 ${bin}/filterFreqs.py ${out}/${1}/${1}.freqs ${out}/${1}/${1}
 
-# python3 cluster.py 0.05 ${out}/${1}/${1}
+# python3 get_non_syn.py ${out}/${1}/${1}
+# python3 cluster.py 0.05 ${out}/${1}/${1}."ns"
 
 

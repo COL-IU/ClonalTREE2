@@ -499,4 +499,4 @@ def predict(F, variants, algo, R=[], filter=True):
         score = zero
     end = process_time()
 
-    return parents, score, variants, removed_variants, len(F), end-start, removed_time_points
+    return parents, score, variants, removed_variants, len(F), end-start, removed_time_points, F

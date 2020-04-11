@@ -304,6 +304,32 @@ def get_c(F, T, fail_threshold):
     return C, p
 
 
+def get_c_no_fail(F, parents):
+    if not F:
+        return []
+    m = len(F)
+    n = len(F[0])
+    children = parents_to_children(parents, len(parents))
+    C = [[zero for _ in range(n)] for _ in range(m)]
+
+    # Assume that F contains the founder column and row
+    C[0][0] = one
+    for i in range(1, m):
+        for j in range(0, n):
+            c = children[j]
+            cs = 0
+            for child in c:
+                cs += F[i][child]
+            C[i][j] = F[i][j] - cs
+            if C[i][j] < zero:
+                C[i][j] = zero
+    for i in range(1, m):
+        s = sum(C[i])
+        for j in range(0, n):
+            C[i][j] = C[i][j] / s
+    return C
+
+
 def get_p(F, parents, fail_threshold):
     tree = list_to_tree(parents)
     _, p = get_c(F, tree, fail_threshold)

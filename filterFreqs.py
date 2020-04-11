@@ -167,14 +167,15 @@ if len(R_new) > 0:
 f4.close()
 
 f5 = open(sys.argv[2]+".putations", "w")
-loci = []
-for locus in var_new:
-    if locus not in invalids:
-        temp = locus.split("_")
-        loci.append(int(temp[-1]))
-for locus in sorted(loci):
-    key = "K12MG1655_Chr1_" + str(locus)
+variants = []
+for variant in var_new:
+    if variant not in invalids:
+        temp = variant.split("@")
+        contig = temp[0]
+        locus = int(temp[1])
+        variants.append([contig, locus])
+for [contig, locus] in sorted(variants, key=lambda x: (x[0], x[1])):
+    key = contig + "@" + str(locus)
     sub = subs[key]
-    f5.write("K12MG1655_Chr1 " + str(locus) + " " + sub[0] + " " + sub[1] + " " + sub[0] + "\n")
+    f5.write(contig + " " + str(locus) + " " + sub[0] + " " + sub[1] + " " + sub[0] + "\n")
 f5.close()
-

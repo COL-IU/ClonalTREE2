@@ -74,16 +74,16 @@ for line in f:
             maxvaf = vaf
             maxallele = nonRefAllele
     nraf = maxvaf
+    nonRefAllele = maxallele
     if nraf < 0.05 or (dict[nonRefAllele] + dict[ref]) < 10 or dict[nonRefAllele] < 6:
         continue
-    nonRefAllele = maxallele
     raf = (dict[ref]+0.0)/(dict[nonRefAllele] + dict[ref])
     if raf < nraf:
         maf = raf
     else:
         maf = nraf
 
-    freqs.write(sys.argv[2] + "\t" + contig + "_" + pos + "\t" + str(depth) + "\t" + ref + "\t" + nonRefAllele + "\t" + "{0:.4f}".format(raf) + "\t" + "{0:.4f}".format(nraf) + "\t" + "{0:.4f}".format(maf) + "\n")
+    freqs.write(sys.argv[2] + "\t" + contig + "@" + pos + "\t" + str(depth) + "\t" + ref + "\t" + nonRefAllele + "\t" + "{0:.4f}".format(raf) + "\t" + "{0:.4f}".format(nraf) + "\t" + "{0:.4f}".format(maf) + "\n")
 
     callsString = calls[0]
     if len(calls) > 1:

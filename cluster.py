@@ -40,6 +40,11 @@ def average_column(l1, l2):
     return list(map(lambda x, y: (x + y) / 2, l1, l2))
 
 
+def weighted_average_column(l1, l2, wl1, wl2):
+    # Assume equal length
+    return list(map(lambda v1, v2, w1, w2: 0 if (w1 + w2 == 0) else ((v1 * w1) + (v2 * w2)) / (w1 + w2), l1, l2, wl1, wl2))
+
+
 def cluster(F, variants, threshold, R):
     F_t = list(map(list, zip(*F)))
     R_t = list(map(list, zip(*R)))
@@ -50,7 +55,9 @@ def cluster(F, variants, threshold, R):
         for j in range(0, len(clusters)):
             (header, column, r_column) = clusters[j]
             if diff_below_cutoff(F_t[i], column, threshold):
-                clusters[j] = (header + "," + variants[i], average_column(F_t[i], column), average_column(R_t[i], r_column))
+                clusters[j] = (header + "," + variants[i],
+                               weighted_average_column(F_t[i], column, R_t[i], r_column),
+                               weighted_average_column(R_t[i], r_column, R_t[i], r_column))
                 new_cluster = False
                 break
         if new_cluster:
@@ -92,8 +99,8 @@ for line in lines:
 
 (cluster_variants, cluster_F, cluster_R) = cluster(F, variants, threshold, R)
 
-# print(len(variants))
-# print(len(cluster_variants))
+print(len(variants))
+print(len(cluster_variants))
 
 out1 = sys.argv[2] + ".cs.vaf"
 out2 = sys.argv[2] + ".cs.var"

@@ -3,6 +3,7 @@ import numpy as np
 from time import *
 from pcheck import *
 import sys
+from copy import *
 
 
 def filter_data(F, R, variants):
@@ -118,16 +119,15 @@ def best_scoring_ancestor(F, S, order, parents, clone_index, prev_clone_arrival_
         penalty = zero
         for t in range(curr_clone_arrival_time, len(F)):
             children_sum = zero
-            cs_sds = zero
+            children_variance = zero
             for child in cur_children:
                 children_sum = children_sum + F[t][child]
-                cs_sds = cs_sds + (S[t][child] ** 2)
+                children_variance = children_variance + (S[t][child] ** 2)
             temp = F[t][clone] - children_sum
             if temp < 0:
-                denominator = Decimal(sqrt((S[t][clone] ** 2) + cs_sds))
-                if denominator > zero:
-                    penalty = penalty + (temp / denominator)
-                    # penalty = penalty + temp
+                denominator = Decimal(sqrt((S[t][clone] ** 2) + children_variance))
+                # if denominator > zero:
+                penalty = penalty + (temp / denominator)
         penalized_scores[clone] = new_scores[clone] + penalty
 
     temp = []
@@ -162,13 +162,13 @@ def tree_score(F, S, order, parents, arrival_times, upto):
         penalty = zero
         for t in range(curr_clone_arrival_time, len(F)):
             children_sum = zero
-            cs_sds = zero
+            children_variance = zero
             for child in cur_children:
                 children_sum = children_sum + F[t][child]
-                cs_sds = cs_sds + (S[t][child] ** 2)
+                children_variance = children_variance + (S[t][child] ** 2)
             temp = F[t][parent] - children_sum
             if temp < 0:
-                denominator = Decimal(sqrt((S[t][parent] ** 2) + cs_sds))
+                denominator = Decimal(sqrt((S[t][parent] ** 2) + children_variance))
                 if denominator > zero:
                     # print(str(temp) + "\t" + str(denominator) + "\t" + str(temp / denominator))
                     penalty = penalty + (temp / denominator)
@@ -182,7 +182,7 @@ def tree_score(F, S, order, parents, arrival_times, upto):
 def new_algorithm(F, R):
     # Empty check
     if len(F) == 0:
-        return [], -1  # parents_vector, score
+        return [], -1, []  # parents_vector, score
 
     S = rd_to_sd(F, R)
 
@@ -223,7 +223,6 @@ def new_algorithm(F, R):
                                                                arrival_times[order[clone_counter]])
                 max_parents = parents.copy()
                 max_parents[clone] = parent
-                # print(scores[parent])
                 max_score = final_score * score
                 max_penalty = final_penalty + penalty
                 max_order = new_order[:]
@@ -252,7 +251,7 @@ def new_algorithm(F, R):
     for i in range(1, num_clones):
         parents_vector.append(parents[i])
 
-    return parents_vector, final_score + final_penalty
+    return parents_vector, final_score + final_penalty, order
 
 
 def valid_parent_value(parents, F, fail_threshold):
@@ -429,6 +428,7 @@ def old_algorithm(F, R, smart_predict_algo):
     S = rd_to_sd(F, R)
 
     num_clones = len(F[0])
+    order = []
 
     steps, arrival_times = get_step_structure(F)
     choices_stack = [(0, [0], [])]
@@ -476,22 +476,27 @@ def predict(F, variants, algo, R=[], filter=True):
     if len(R) == 0:
         R = [[Decimal(sys.maxsize) for _ in range(len(F[0]))] for _ in range(len(F))]
     if filter:
-        F, R, variants, removed_variants = filter_data(F, R, variants)
+        F1, R1, variants1, removed_variants = filter_data(F, R, variants)
     else:
         removed_variants = []
-    F, R, _, removed_time_points = remove_redundant_time_points(F, R)
+        F1 = deepcopy(F)
+        R1 = deepcopy(R)
+        variants1 = deepcopy(variants)
 
+    F2, R2, _, removed_time_points = remove_redundant_time_points(F1, R1)
+
+    order = []
     if variants:
-        # F, R, variants = cluster_data(F, R, variants, 0.05)
-        # F, R, _, _ = remove_redundant_time_points(F, R)
+        # F2, R2, variants1 = cluster_data(F2, R2, variants1, 0.05)
+        # F2, R2, _, _ = remove_redundant_time_points(F2, R2)
         parents = []
         score = zero
         if algo == 0:
-            parents, score = old_algorithm(F, R, smart_predict_original)
+            parents, score = old_algorithm(F2, R2, smart_predict_original)
         elif algo == 1:
-            parents, score = new_algorithm(F, R)
+            parents, score, order = new_algorithm(F2, R2)
         elif algo == 2:
-            parents, score = old_algorithm(F, R, smart_predict_penalty)
+            parents, score = old_algorithm(F2, R2, smart_predict_penalty)
         else:
             exit("Invalid parameter for algo.")
     else:
@@ -499,4 +504,4 @@ def predict(F, variants, algo, R=[], filter=True):
         score = zero
     end = process_time()
 
-    return parents, score, variants, removed_variants, len(F), end-start, removed_time_points, F
+    return parents, score, variants1, removed_variants, len(F2), end-start, removed_time_points, F1, R1, order

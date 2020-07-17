@@ -125,16 +125,19 @@ def read_output(output_file):
         running_time = Decimal(lines[i + 4][14:])
         num_tp = int(lines[i + 5][17:])
         removed_variants = list(map(str, lines[i + 6][9:].split(None)))
-        out.append((parents, variants, score, running_time, num_tp, removed_variants))
-        i = i + 7
+        order = list(map(int, lines[i + 7][7:].split(None)))
+        out.append((parents, variants, score, running_time, num_tp, removed_variants, order))
+        i = i + 8
     return out
 
 
-def get_last_standing_clones_accuracy(true_parents, predicted_parents, F, removed_variants):
+def get_last_standing_clones_accuracy(true_parents, predicted_parents, F, removed_variants, order, R):
     if not predicted_parents:
         return 0.0
     my_F = add_founder(F)
+    my_R = add_founder_reads(R)
     my_F_t = list(map(list, zip(*my_F)))
+    my_R_t = list(map(list, zip(*my_R)))
     variants = list(range(1, len(true_parents)))
     removed_variants = sorted(list(map(int, removed_variants)))
     mapping = [0] * len(true_parents)
@@ -154,9 +157,11 @@ def get_last_standing_clones_accuracy(true_parents, predicted_parents, F, remove
     removed_variants = sorted(removed_variants, reverse=True)
     for i in range(0, len(removed_variants)):
         del my_F_t[removed_variants[i]]
+        del my_R_t[removed_variants[i]]
     my_F = list(map(list, zip(*my_F_t)))
-    true_C = get_c_no_fail(my_F, new_parents)
-    predicted_C = get_c_no_fail(my_F, predicted_parents)
+    my_R = list(map(list, zip(*my_R_t)))
+    true_C, _ = get_c_no_fail(my_F, new_parents, order)
+    predicted_C, _ = get_c_no_fail(my_F, predicted_parents, order)
     true_last_standing_clones = []
     predicted_last_standing_clones = []
     true_last_row = true_C[-1]
@@ -188,6 +193,41 @@ def get_last_standing_clones_accuracy(true_parents, predicted_parents, F, remove
         return 0.0
 
 
+def get_clones_accuracy(true_parents, predicted_parents, removed_variants):
+    if not predicted_parents:
+        return 0.0
+    variants = list(range(1, len(true_parents)))
+    removed_variants = sorted(list(map(int, removed_variants)))
+    mapping = [0] * len(true_parents)
+    new_parents = []
+    j = 0
+    for i in range(0, len(true_parents)):
+        if i not in removed_variants:
+            mapping[i] = j
+            parent = true_parents[i]
+            while parent in removed_variants:
+                parent = true_parents[parent]
+            new_parents.append(mapping[parent])
+            j += 1
+    match_percentages = []
+    for clone in range(1, len(new_parents)):
+        true_clone = {clone}
+        temp = new_parents[clone]
+        while temp != 0:
+            true_clone.add(temp)
+            temp = new_parents[temp]
+        predicted_clone = {clone}
+        temp = predicted_parents[clone]
+        while temp != 0:
+            predicted_clone.add(temp)
+            temp = predicted_parents[temp]
+        match_percentages.append((0.0 + len(true_clone.intersection(predicted_clone)) / len(true_clone)))
+    if match_percentages:
+        return sum(match_percentages) / len(match_percentages)
+    else:
+        return 0.0
+
+
 def evaluate_batch(sim_file, algos):
     F_list, parents_list, likelihood_list, R_list = read_simulations(sim_file)
 
@@ -195,13 +235,15 @@ def evaluate_batch(sim_file, algos):
     avg_number_of_true_clones_dict = {}
     log_running_times_dict = {}
     avg_number_of_time_points_dict = {}
-    last_standing_clones_accuracies_dict = {}
+    clones_accuracies_dict = {}
+    # last_standing_clones_accuracies_dict = {}
     for j in algos:
         match_percentages = []
         number_of_true_clones = []
         running_times = []
         number_of_time_points = []
-        last_standing_clones_accuracies = []
+        clones_accuracies = []
+        # last_standing_clones_accuracies = []
         predicted_output = read_output(sim_file + "." + str(j))
         for i in range(0, len(parents_list)):
             true_clones = get_clones2(parents_list[i], predicted_output[i][5])
@@ -215,14 +257,19 @@ def evaluate_batch(sim_file, algos):
             number_of_true_clones.append(len(true_clones))
             running_times.append(predicted_output[i][3])
             number_of_time_points.append(predicted_output[i][4])
-            last_standing_clones_accuracies.append(get_last_standing_clones_accuracy(parents_list[i], predicted_output[i][0], F_list[i], predicted_output[i][5]))
+            clones_accuracies.append((get_clones_accuracy(parents_list[i], predicted_output[i][0],
+                                                          predicted_output[i][5])))
+            # last_standing_clones_accuracies.append(
+            #     get_last_standing_clones_accuracy(parents_list[i], predicted_output[i][0],
+            #                                    F_list[i], predicted_output[i][5], predicted_output[i][6], R_list[i]))
         match_percentages_dict[j] = match_percentages
         avg_number_of_true_clones_dict[j] = (sum(number_of_true_clones) + 0.0) / len(number_of_true_clones)
         running_times = list(map(lambda x: x if x != 0 else 0.0001, running_times))
         log_running_times = list(map(np.log10, running_times))
         log_running_times_dict[j] = log_running_times
         avg_number_of_time_points_dict[j] = (sum(number_of_time_points) + 0.0) / len(number_of_time_points)
-        last_standing_clones_accuracies_dict[j] = last_standing_clones_accuracies
+        clones_accuracies_dict[j] = clones_accuracies
+        # last_standing_clones_accuracies_dict[j] = last_standing_clones_accuracies
 
     o1 = open(sim_file + ".recall", "w")
     for i in range(0, len(parents_list)):
@@ -249,7 +296,7 @@ def evaluate_batch(sim_file, algos):
     o1 = open(sim_file + ".acc", "w")
     for i in range(0, len(parents_list)):
         for j in algos:
-            o1.write("{0:.5f}".format(last_standing_clones_accuracies_dict[j][i]) + "\t")
+            o1.write("{0:.5f}".format(clones_accuracies_dict[j][i]) + "\t")
         o1.write("\n")
     o1.close()
 
@@ -266,7 +313,7 @@ def predict_batch(sim_file, algo):
         F = F_list[i]
         R = R_list[i]
         var = list(range(1, len(F[0]) + 1))
-        parents, score, variants, removed_variants, num_times, running_time, _, _ = predict(F, var, algo, R)
+        parents, score, variants, removed_variants, num_times, running_time, _, _, _, order = predict(F, var, algo, R)
         out_file_f.write("# " + str(i + 1) + "\n")
         out_file_f.write("Parents: " + " ".join(map(str, parents)) + "\n")
         out_file_f.write("Variants: " + " ".join(map(str, variants)) + "\n")
@@ -274,6 +321,7 @@ def predict_batch(sim_file, algo):
         out_file_f.write("Running Time: " + str(running_time) + "\n")
         out_file_f.write("Num time-points: " + str(num_times) + "\n")
         out_file_f.write("Removed: " + " ".join(map(str, removed_variants)) + "\n")
+        out_file_f.write("Order: " + " ".join(map(str, order)) + "\n")
     out_file_f.close()
 
 

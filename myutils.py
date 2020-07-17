@@ -12,7 +12,9 @@ import networkx as nx
 one = Decimal('1.0')
 zero = Decimal('0.0')
 low = Decimal('0.00001')
+high = Decimal('Inf')
 FAIL_THRESHOLD = Decimal('0.0')
+high_read_depth = maxsize
 
 
 def rd_to_sd(F, R):
@@ -27,11 +29,36 @@ def rd_to_sd(F, R):
                 if R[i][j] == zero:
                     S[i][j] = zero
                 else:
-                    S[i][j] = Decimal(sqrt((F[i][j] * (1 - F[i][j])) / R[i][j]))
+                    if F[i][j] == one:
+                        S[i][j] = Decimal(sqrt((low * (1 - low)) / R[i][j]))
+                    else:
+                        S[i][j] = Decimal(sqrt((F[i][j] * (1 - F[i][j])) / R[i][j]))
     return S
 
 
-def compare_columns(c1, c2, ind1, ind2):
+def compare_columns_undirected(c1, c2, ind1, ind2):
+    diff1 = 0
+    count1 = 0
+    diff2 = 0
+    count2 = 0
+    for i in range(0, len(c1)):
+        if c1[i] >= c2[i]:
+            diff1 = diff1 + c1[i] - c2[i]
+            count1 = count1 + 1
+        if c2[i] >= c1[i]:
+            diff2 = diff2 + c2[i] - c1[i]
+            count2 = count2 + 1
+    if count1 == len(c1):
+        return [(ind1, ind2, 0)]
+    if count2 == len(c1):
+        return [(ind2, ind1, 0)]
+    if diff1 > diff2:
+        return [(ind1, ind2, diff2)]
+    else:
+        return [(ind2, ind1, diff1)]
+
+
+def compare_columns_directed(c1, c2, ind1, ind2):
     diff1 = 0
     count1 = 0
     diff2 = 0
@@ -55,14 +82,44 @@ def get_partial_order(F, column_range):
     F_t = list(map(list, zip(*F)))
     G = {}
     vertices = set()
+    weighted_edges_undirected = []
+    weighted_edges_directed = []
     edges = []
     for i in range(column_range[0], column_range[1]):
         for j in range(i+1, column_range[1] + 1):
-            edges = edges + compare_columns(F_t[i], F_t[j], i, j)
-    # print(edges)
+            # weighted_edge_undirected = compare_columns_undirected(F_t[i], F_t[j], i, j)
+            # weighted_edges_undirected = weighted_edges_undirected + weighted_edge_undirected
+            # edges.append((weighted_edge_undirected[0][0], weighted_edge_undirected[0][1]))
+            weighted_edge_directed = compare_columns_directed(F_t[i], F_t[j], i, j)
+            weighted_edges_directed = weighted_edges_directed + weighted_edge_directed
+
+    # UG = nx.Graph()
+    # UG.add_weighted_edges_from(weighted_edges_undirected)
+    # mst = nx.minimum_spanning_tree(UG)
+    # print(weighted_edges_undirected)
+    # print(nx.get_edge_attributes(mst, "weight"))
+
     DG = nx.DiGraph()
-    DG.add_weighted_edges_from(edges)
+    DG.add_weighted_edges_from(weighted_edges_directed)
     msa = nx.minimum_spanning_arborescence(DG, attr='weight', default=1)
+    # print(weighted_edges_directed)
+    # print(nx.get_edge_attributes(msa, "weight"))
+
+    # mstEdges = list(map(sorted, mst.edges()))
+    # for edge in edges:
+    #     if sorted(edge) in mstEdges:
+    #         start = edge[0]
+    #         end = edge[1]
+    #         if start in G.keys():
+    #             G[start].add(end)
+    #         else:
+    #             G[start] = {end}
+    #         vertices.add(start)
+    #         vertices.add(end)
+    # for vertex in vertices:
+    #     if vertex not in G.keys():
+    #         G[vertex] = set()
+
     for edge in msa.edges():
         start = edge[0]
         end = edge[1]
@@ -75,6 +132,7 @@ def get_partial_order(F, column_range):
     for vertex in vertices:
         if vertex not in G.keys():
             G[vertex] = set()
+
     return G, list(vertices)
 
 
@@ -149,6 +207,14 @@ def remove_first_rowcol(mat):
     for i in range(1, len(mat)):
         out.append(mat[i][1:])
     return out
+
+
+def add_founder_reads(R):
+    my_R = [[zero for _ in range(len(R[0]) + 1)]]
+    my_R[0][0] = high_read_depth
+    for row in R:
+        my_R.append([high_read_depth] + row)
+    return my_R
 
 
 def add_founder_penalty(S):
@@ -304,30 +370,47 @@ def get_c(F, T, fail_threshold):
     return C, p
 
 
-def get_c_no_fail(F, parents):
+def get_c_no_fail(F, parents, order):
     if not F:
-        return []
-    m = len(F)
-    n = len(F[0])
-    children = parents_to_children(parents, len(parents))
+        return [], []
+    F1 = deepcopy(F)
+    m = len(F1)
+    n = len(F1[0])
+    children_dict = parents_to_children(parents, len(parents))
     C = [[zero for _ in range(n)] for _ in range(m)]
 
     # Assume that F contains the founder column and row
     C[0][0] = one
     for i in range(1, m):
-        for j in range(0, n):
-            c = children[j]
+        for j in order:
+            children = children_dict[j]
             cs = 0
-            for child in c:
-                cs += F[i][child]
-            C[i][j] = F[i][j] - cs
+            for child in children:
+                cs += F1[i][child]
+            C[i][j] = F1[i][j] - cs
             if C[i][j] < zero:
                 C[i][j] = zero
-    for i in range(1, m):
-        s = sum(C[i])
-        for j in range(0, n):
-            C[i][j] = C[i][j] / s
-    return C
+                # F1[i][j] = (F1[i][j] + cs) / 2
+                # if F1[i][j] > one:
+                #     F1[i][j] = one
+                # stdout.write("{0:.5f}".format(F1[i][j]) + "\t")
+                for child in children:
+                    # if (F1[i][child] / cs) * F1[i][j] == zero and F1[i][child] != zero:
+                    #     print(i, j, child, F1[i][j], F1[i][child])
+                    F1[i][child] = (F1[i][child] / cs) * F1[i][j]
+    # for i in range(1, m):
+    #     for j in order:
+    #         children = children_dict[j]
+    #         cs = 0
+    #         for child in children:
+    #             cs += F1[i][child]
+    #         C[i][j] = F1[i][j] - cs
+
+    # for i in range(1, m):
+    #     s = sum(C[i])
+    #     for j in range(0, n):
+    #         C[i][j] = C[i][j] / s
+    return C, F1
 
 
 def get_p(F, parents, fail_threshold):

@@ -6,6 +6,40 @@ from copy import *
 zero = Decimal('0.0')
 
 
+def filter_founder_variants(F, R, variants):
+    F_temp = deepcopy(F)
+    R_temp = deepcopy(R)
+    F_temp = list(map(list, zip(*F_temp)))
+    R_temp = list(map(list, zip(*R_temp)))
+    F_out = []
+    R_out = []
+    founder_F_out = []
+    founder_R_out = []
+    variants_out = []
+    founder_var = []
+    print(len(variants))
+    for i in range(0, len(F_temp)):
+        num_ones1 = 0
+        for j in range(0, len(F_temp[i])):
+            if F_temp[i][j] > 0.95:
+                num_ones1 += 1
+        if num_ones1 < 4:
+            F_out.append(F_temp[i])
+            R_out.append(R_temp[i])
+            variants_out.append(variants[i])
+        else:
+            founder_F_out.append(F_temp[i])
+            founder_R_out.append(R_temp[i])
+            founder_var.append(variants[i])
+    print(len(variants_out))
+    print(len(founder_var))
+    F_out = list(map(list, zip(*F_out)))
+    R_out = list(map(list, zip(*R_out)))
+    founder_F_out = list(map(list, zip(*founder_F_out)))
+    founder_R_out = list(map(list, zip(*founder_R_out)))
+    return F_out, R_out, variants_out, founder_var, founder_F_out, founder_R_out
+
+
 def reorder(l, order):
     return [l[i] for i in order]
 
@@ -38,6 +72,7 @@ def rearrange(F, R, variants, remove_redundancy=False):
     non_founder_F = []
     non_founder_var = []
     non_founder_R = []
+    founder_var = []
 
     for i in range(0, len(variants_out)):
         row = F_out[i]
@@ -46,13 +81,17 @@ def rearrange(F, R, variants, remove_redundancy=False):
             if row[j] < Decimal('0.9'):
                 is_founder = False
                 break
-        if not is_founder:
+        if is_founder:
+            founder_var.append(variants_out[i])
+        else:
             non_founder_F.append(row)
             non_founder_var.append(variants_out[i])
             non_founder_R.append(R_out[i])
 
     non_founder_F = list(map(list, zip(*non_founder_F)))
     non_founder_R = list(map(list, zip(*non_founder_R)))
+    # non_founder_F = list(map(list, zip(*F_out)))
+    # non_founder_R = list(map(list, zip(*R_out)))
 
     if remove_redundancy:
         # Remove unnecessary time points
@@ -72,7 +111,7 @@ def rearrange(F, R, variants, remove_redundancy=False):
         non_founder_F = new_F
         non_founder_R = new_R
 
-    return non_founder_F, non_founder_R, non_founder_var
+    return non_founder_F, non_founder_R, non_founder_var, founder_var
 
 
 def is_valid(t):
@@ -143,7 +182,10 @@ for line in lines:
         f1.write(line.strip() + "\n")
 f1.close()
 
-F_new, R_new, var_new = rearrange(F, R, filtered, False)
+F, R, filtered, founder_variants, founder_F, founder_R = filter_founder_variants(F, R, filtered)
+F_new, R_new, var_new, more_founder = rearrange(F, R, filtered, False)
+
+founder_variants = founder_variants + more_founder
 
 f2 = open(sys.argv[2]+".vaf", "w")
 if len(F_new) > 0:
@@ -179,3 +221,27 @@ for [contig, locus] in sorted(variants, key=lambda x: (x[0], x[1])):
     sub = subs[key]
     f5.write(contig + " " + str(locus) + " " + sub[0] + " " + sub[1] + " " + sub[0] + "\n")
 f5.close()
+
+f6 = open(sys.argv[2]+".fv.putations", "w")
+variants = []
+for variant in founder_variants:
+    if variant not in invalids:
+        temp = variant.split("@")
+        contig = temp[0]
+        locus = int(temp[1])
+        variants.append([contig, locus])
+for [contig, locus] in sorted(variants, key=lambda x: (x[0], x[1])):
+    key = contig + "@" + str(locus)
+    sub = subs[key]
+    f6.write(contig + " " + str(locus) + " " + sub[0] + " " + sub[1] + " " + sub[0] + "\n")
+f6.close()
+
+f = open(sys.argv[2]+".fv.vaf", "w")
+if len(founder_F) > 0:
+    write_dm(founder_F, f)
+f.close()
+
+f = open(sys.argv[2]+".fv.R", "w")
+if len(founder_R) > 0:
+    write_dm(founder_R, f)
+f.close()

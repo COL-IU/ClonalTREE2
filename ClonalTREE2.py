@@ -40,19 +40,21 @@ def FIT_t(nus, time):
     return t, L - 1, p, 1
 
 
-if len(sys.argv) <= 2:
-    sys.exit("Usage: python3 ClonalTREE2.py <prefix> <generation_time> <optional:gff>\n\n"
+if len(sys.argv) <= 1:
+    sys.exit("Usage: python3 ClonalTREE2.py <prefix> <optional:generations> <optional:gff>\n\n"
              "<prefix>:\t[String] Path/filename prefix for the input files and the output files.\n"
-             "<generation_time>:\t[Int] Number of generations between each time point.\n\n"
+             "<optional:generations>:\t[Int] Number of generations between each time point.\n"
+             "<optional:gff>:\t[String] Path to GFF3 file containing the gene annotation of the reference genome.\n\n"
              "Input files:\n"
              "<prefix>.vaf:\tInput file containing the variant allele frequencies matrix (F).\n"
              "<prefix>.rd:\tInput file containing the read depth matrix (R).\n"
-             "<prefix>.var:\tInput file containing the variant names / loci.\n"
-             "optional:file.gff:\tGFF3 file containing the gene annotation of the reference genome.\n\n"
+             "<prefix>.var:\tInput file containing the variant names / loci.\n\n"
              "Output files:\n"
+             "<prefix>.F:\tAllele frequency matrix used for clonal reconstruction (after filtering).\n"
+             "<prefix>.R:\tRead depth matrix used for clonal reconstruction (after filtering).\n"
+             "<prefix>.C:\tClonal frequency matrix calculated using the allele frequencies and the reconstructed clonal tree.\n"
              "<prefix>.tree:\tList of each node and their corresponding ancestor.\n"
              "<prefix>.dot:\tTree in dot format to visualize using GraphViz.\n"
-             "<prefix>.C:\tTable containing the clonal frequency matrix (C).\n"
              "<prefix>.info:\tA few added information regarding the prediction.\n"
              )
 
@@ -61,7 +63,11 @@ rd_file = sys.argv[1] + ".rd"
 var_file = sys.argv[1] + ".var"
 prefix = sys.argv[1]
 gff_file = ""
-time = int(sys.argv[2])
+
+if len(sys.argv) == 3:
+    time = int(sys.argv[2])
+else:
+    time = 500
 
 if len(sys.argv) == 4:
     gff_file = sys.argv[3]

@@ -1,14 +1,14 @@
-ClonalTREE2
+# ClonalTREE2
 
-Requirements:
+## Requirements:
 - Interpreters: Python 3, Perl
 - Python libraries: numpy, graphviz, scipy
 - Trimmomatic 0.33
 
-Installation: 
+## Installation: 
 git clone https://github.com/COL-IU/ClonalTREE2.git
 
-Running the program: 
+## Running the program: 
 
 Part 1 - Aligning the FASTQ reads, variant calling and compilation of information in ClonalTREE2 recognizable formats*:
 1) Make sure the FASTQ files are gzipped and named in the following format: projectname_timetag_1.fq.gz, projectname_timetag_2.fq.gz
@@ -22,7 +22,7 @@ Part 2 - Running ClonalTREE2
     - \<optional: generations\> is an integer number of generations between any two time points. It is used for the statistical test for significance of the selective trends in clonal frequencies. This parameter is optional.
     - \<optional: GFF annotation\> is the file path to a GFF file corresponding to the reference genome. This is used to annotate the clones in the clonal tree. This parameter is optional.
   
-Input files:
+## Input files:
 1) \<prefix\>.vaf - variant allele frequencies matrix (F): First row should be space separated names of mutations that are column headers of the F matrix, which also will appear as node names in the inferred clonal tree. The subsequent rows should contain the allele frequencing of each mutation in the same order as the column headers, and the rows ordered by time points. 
 
     Example \<prefix\>.vaf file:
@@ -66,7 +66,7 @@ Input files:
     K12MG1655_Chr1@1992666\
     K12MG1655_Chr1@485157
 
-Output files:
+## Output files:
 1) \<prefix\>.F - Allele frequency matrix used for clonal reconstruction (after filtering).  
 2) \<prefix\>.R - Read depths matrix used for clonal reconstruction (after filtering).
 3) \<prefix\>.C - Clonal frequency matrix calculated using the allele frequencies and the reconstructed clonal tree. 

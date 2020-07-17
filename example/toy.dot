@@ -1,0 +1,45 @@
+digraph {
+	0 [label="0 / Founder / 0"]
+	node [fillcolor=white style=filled]
+	1 [label="1 / K12MG1655_Chr1@3620145"]
+	node [fillcolor=white style=filled]
+	2 [label="2 / K12MG1655_Chr1@3828830"]
+	node [fillcolor=white style=filled]
+	3 [label="3 / K12MG1655_Chr1@4465843"]
+	node [fillcolor=white style=filled]
+	4 [label="4 / K12MG1655_Chr1@4545071"]
+	node [fillcolor=white style=filled]
+	5 [label="5 / K12MG1655_Chr1@98824"]
+	node [fillcolor=white style=filled]
+	6 [label="6 / K12MG1655_Chr1@986579"]
+	node [fillcolor=white style=filled]
+	7 [label="7 / K12MG1655_Chr1@1466879"]
+	node [fillcolor=white style=filled]
+	8 [label="8 / K12MG1655_Chr1@1709038"]
+	node [fillcolor=white style=filled]
+	9 [label="9 / K12MG1655_Chr1@212938"]
+	node [fillcolor=white style=filled]
+	10 [label="10 / K12MG1655_Chr1@3035546"]
+	node [fillcolor=white style=filled]
+	11 [label="11 / K12MG1655_Chr1@3318034"]
+	node [fillcolor=white style=filled]
+	12 [label="12 / K12MG1655_Chr1@106568"]
+	node [fillcolor=white style=filled]
+	13 [label="13 / K12MG1655_Chr1@1992666"]
+	node [fillcolor=white style=filled]
+	14 [label="14 / K12MG1655_Chr1@485157"]
+	0 -> 1
+	5 -> 2
+	0 -> 3
+	2 -> 4
+	1 -> 5
+	3 -> 6
+	11 -> 7
+	6 -> 8
+	4 -> 9
+	9 -> 10
+	6 -> 11
+	14 -> 12
+	14 -> 13
+	10 -> 14
+}

@@ -40,7 +40,7 @@ def FIT_t(nus, time):
     return t, L - 1, p, 1
 
 
-if len(sys.argv) <= 3:
+if len(sys.argv) <= 2:
     sys.exit("Usage: python3 ClonalTREE2.py <prefix> <generation_time> <optional:gff>\n\n"
              "<prefix>:\t[String] Path/filename prefix for the input files and the output files.\n"
              "<generation_time>:\t[Int] Number of generations between each time point.\n\n"

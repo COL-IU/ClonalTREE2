@@ -17,7 +17,7 @@ def filter_founder_variants(F, R, variants):
     founder_R_out = []
     variants_out = []
     founder_var = []
-    print(len(variants))
+    # print(len(variants))
     for i in range(0, len(F_temp)):
         num_ones1 = 0
         for j in range(0, len(F_temp[i])):
@@ -31,8 +31,8 @@ def filter_founder_variants(F, R, variants):
             founder_F_out.append(F_temp[i])
             founder_R_out.append(R_temp[i])
             founder_var.append(variants[i])
-    print(len(variants_out))
-    print(len(founder_var))
+    # print(len(variants_out))
+    # print(len(founder_var))
     F_out = list(map(list, zip(*F_out)))
     R_out = list(map(list, zip(*R_out)))
     founder_F_out = list(map(list, zip(*founder_F_out)))
@@ -145,11 +145,14 @@ f.close()
 times = {}
 subs = {}
 invalids = []
+max_time = 0
 
 for line in lines:
     words = line.split(None)
     locus = words[1]
-    time = int(words[0][1])
+    time = int(words[0][1:])
+    if time > max_time:
+        max_time = time
     if locus in times:
         times[locus].append(time)
     else:
@@ -158,7 +161,7 @@ for line in lines:
     if locus in subs.keys():
         if subs[locus] != (words[3], words[4]):
             invalids.append(locus)
-            print(line)
+            # print(line)
     else:
         subs[locus] = (words[3], words[4])
 
@@ -169,12 +172,12 @@ for locus in sorted(times.keys()):
         filtered.append(locus)
 
 f1 = open(sys.argv[2]+".filtered.freqs", "w")
-F = [[zero for _ in range(len(filtered))] for _ in range(6)]
-R = [[zero for _ in range(len(filtered))] for _ in range(6)]
+F = [[zero for _ in range(len(filtered))] for _ in range(max_time)]
+R = [[zero for _ in range(len(filtered))] for _ in range(max_time)]
 for line in lines:
     words = line.split(None)
     locus = words[1]
-    time = int(words[0][1])-1
+    time = int(words[0][1:])-1
     if locus in filtered:
         col = filtered.index(locus)
         F[time][col] = Decimal(words[6])

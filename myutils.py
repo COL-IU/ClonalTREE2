@@ -86,7 +86,7 @@ def get_partial_order(F, column_range):
     weighted_edges_directed = []
     edges = []
     for i in range(column_range[0], column_range[1]):
-        for j in range(i+1, column_range[1] + 1):
+        for j in range(i + 1, column_range[1] + 1):
             # weighted_edge_undirected = compare_columns_undirected(F_t[i], F_t[j], i, j)
             # weighted_edges_undirected = weighted_edges_undirected + weighted_edge_undirected
             # edges.append((weighted_edge_undirected[0][0], weighted_edge_undirected[0][1]))
@@ -271,7 +271,7 @@ def enum_spanning_trees(G_i):
         #     stdout.write(" i1 = " + str(i/1000000) + " M; " + str(datetime.now()) + "\n")
         #     stdout.flush()
         # i += 1
-        sTrees.append(list_to_tree([0]+list(element)))
+        sTrees.append(list_to_tree([0] + list(element)))
     return sTrees
 
 
@@ -284,7 +284,7 @@ def calc_dist(l):
 
 
 def list_to_tree(parents):
-    T = [[0]*len(parents)]
+    T = [[0] * len(parents)]
     T[0][0] = 1
     for i in range(1, len(parents)):
         parent = parents[i]
@@ -298,7 +298,7 @@ def list_to_clones(parents, variants):
     for i in range(1, len(parents)):
         parent = parents[i]
         clones.append(clones[parent][:])
-        clones[i].append(variants[i-1])
+        clones[i].append(variants[i - 1])
     return clones[1:]
 
 
@@ -341,7 +341,7 @@ def get_c_penalty(F, S, T, fail_threshold):
     else:
         p = one
         for i in range(1, n):
-            p = p * C[i-1][parents[i]]
+            p = p * C[i - 1][parents[i]]
     return C, p
 
 
@@ -366,7 +366,7 @@ def get_c(F, T, fail_threshold):
     else:
         p = one
         for i in range(1, n):
-            p = p * C[i-1][parents[i]]
+            p = p * C[i - 1][parents[i]]
     return C, p
 
 
@@ -429,7 +429,7 @@ def get_f(C, T):
         for j in range(0, n):
             temp = Decimal('0.0')
             for k in range(0, n):
-                temp += (C[i][k]*T[k][j])
+                temp += (C[i][k] * T[k][j])
             F[i][j] = temp
     return F
 
@@ -663,9 +663,23 @@ def get_step_structure(F):
     arrival_times = []
     i = 0
     for step in steps:
-        arrival_times = arrival_times + ([i]*len(step))
+        arrival_times = arrival_times + ([i] * len(step))
         i = i + 1
     return steps, arrival_times
+
+
+def correct_steps_for_known_founders(steps, k):
+    out_steps = [[0]]
+    step = steps[1]
+    if k == 0 or k == step[-1]:
+        return steps
+    if step[-1] < k:
+        exit("Invalid input for known founders. The VAF for founder variants in first time point should be non-zero.\n")
+    out_steps.append(list(range(1, k + 1)))
+    out_steps.append(list(range(k + 1, step[-1] + 1)))
+    for i in range(2, len(steps)):
+        out_steps.append(steps[i])
+    return out_steps
 
 
 def squarify(F, step_structure):
@@ -777,10 +791,10 @@ def sub_f(in_F_file, in_var_file, sub_var_file, out_F_file, out_var_file):
 
 
 def remap_parents(indices, parents):
-    remapped = [0]*len(parents)
+    remapped = [0] * len(parents)
     for i in range(1, len(parents)):
         if parents[i] != 0:
-            remapped[indices[i-1]] = indices[parents[i]-1]
+            remapped[indices[i - 1]] = indices[parents[i] - 1]
     return remapped
 
 
@@ -805,20 +819,20 @@ def write_parents(var, parents, out):
     out.write("Clone\tParent\n")
     for i in range(0, len(var)):
         out.write(str(var[i]) + "\t")
-        if parents[i+1] == 0:
+        if parents[i + 1] == 0:
             out.write("0\n")
         else:
-            out.write(str(var[parents[i+1]-1]) + "\n")
+            out.write(str(var[parents[i + 1] - 1]) + "\n")
 
 
 def print_parents(var, parents):
     print("Clone\tParent")
     for i in range(0, len(var)):
         print(str(var[i]) + "\t", end=" ")
-        if parents[i+1] == 0:
+        if parents[i + 1] == 0:
             print("0")
         else:
-            print(str(var[parents[i+1]-1]))
+            print(str(var[parents[i + 1] - 1]))
 
 
 def white_list(variants, clones):
@@ -840,9 +854,9 @@ def black_list(variants, clones):
     for variant in variants:
         out[variant] = set()
     clones_sets = list(map(set, clones))
-    for i in range(0, len(clones_sets)-1):
+    for i in range(0, len(clones_sets) - 1):
         clone1 = clones_sets[i]
-        for j in range(i+1, len(clones_sets)):
+        for j in range(i + 1, len(clones_sets)):
             clone2 = clones_sets[j]
             inter = clone1.intersection(clone2)
             if len(inter) > 0:
@@ -858,7 +872,7 @@ def translate_clones(variants, clones):
         temp = [0]
         for v in clone:
             if v in variants:
-                temp.append(variants.index(v)+1)
+                temp.append(variants.index(v) + 1)
         out.append(temp)
     return out
 

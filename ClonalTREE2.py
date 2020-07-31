@@ -29,22 +29,39 @@ def FIT_t(nus, time):
         Y = (sub_nus[i] - sub_nus[i - 1]) / Decimal(sqrt(2 * sub_nus[i - 1] * (1 - sub_nus[i - 1]) * time))
         Ys.append(Y)
     Y_mean = sum(Ys) / L
-    if Y_mean == zero: # Validate this decision later
+    if Y_mean == zero:  # Validate this decision later
         return zero, 0, 0, 0
     temp = zero
     for Y in Ys:
-        temp = temp + ((Y - Y_mean)**2)
+        temp = temp + ((Y - Y_mean) ** 2)
     S2 = temp / (L - 1)
     t = Y_mean / Decimal(sqrt(S2 / L))
-    p = 2 * (1 - stats.t.cdf(float(abs(t)), df=int(L-1)))
+    p = 2 * (1 - stats.t.cdf(float(abs(t)), df=int(L - 1)))
     return t, L - 1, p, 1
 
 
+# if len(sys.argv) <= 1:
+#     sys.exit("Usage: python3 ClonalTREE2.py <prefix> <optional:generations> <optional:gff>\n\n"
+#              "<prefix>:\t[String] Path/filename prefix for the input files and the output files.\n"
+#              "<optional:generations>:\t[Int] Number of generations between each time point.\n"
+#              "<optional:gff>:\t[String] Path to GFF3 file containing the gene annotation of the reference genome.\n\n"
+#              "Input files:\n"
+#              "<prefix>.vaf:\tInput file containing the variant allele frequencies matrix (F).\n"
+#              "<prefix>.rd:\tInput file containing the read depth matrix (R).\n"
+#              "<prefix>.var:\tInput file containing the variant names / loci.\n\n"
+#              "Output files:\n"
+#              "<prefix>.F:\tAllele frequency matrix used for clonal reconstruction (after filtering).\n"
+#              "<prefix>.R:\tRead depth matrix used for clonal reconstruction (after filtering).\n"
+#              "<prefix>.C:\tClonal frequency matrix calculated using the allele frequencies and the reconstructed clonal tree.\n"
+#              "<prefix>.tree:\tList of each node and their corresponding ancestor.\n"
+#              "<prefix>.dot:\tTree in dot format to visualize using GraphViz.\n"
+#              "<prefix>.info:\tA few added information regarding the prediction.\n"
+#              )
+
 if len(sys.argv) <= 1:
-    sys.exit("Usage: python3 ClonalTREE2.py <prefix> <optional:generations> <optional:gff>\n\n"
+    sys.exit("Usage: python3 ClonalTREE2.py <prefix> <optional:k>\n\n"
              "<prefix>:\t[String] Path/filename prefix for the input files and the output files.\n"
-             "<optional:generations>:\t[Int] Number of generations between each time point.\n"
-             "<optional:gff>:\t[String] Path to GFF3 file containing the gene annotation of the reference genome.\n\n"
+             "<optional:k>:\t[Int] The first k variants/columns will be considered as founders.\n\n"
              "Input files:\n"
              "<prefix>.vaf:\tInput file containing the variant allele frequencies matrix (F).\n"
              "<prefix>.rd:\tInput file containing the read depth matrix (R).\n"
@@ -58,27 +75,31 @@ if len(sys.argv) <= 1:
              "<prefix>.info:\tA few added information regarding the prediction.\n"
              )
 
-vaf_file = sys.argv[1] + ".vaf"
-rd_file = sys.argv[1] + ".rd"
-var_file = sys.argv[1] + ".var"
-prefix = sys.argv[1]
+arg1 = sys.argv[1]
+
+vaf_file = arg1 + ".vaf"
+rd_file = arg1 + ".rd"
+var_file = arg1 + ".var"
+prefix = arg1
 gff_file = ""
 
 if len(sys.argv) == 3:
-    time = int(sys.argv[2])
+    k = int(sys.argv[2])
 else:
-    time = 500
+    k = 0
 
-if len(sys.argv) == 4:
-    gff_file = sys.argv[3]
-    annotate = True
-else:
-    annotate = False
-
-# arg1 = "pop125.vaf"
-# arg2 = "pop125.rd"
-# arg3 = "pop125.var"
-# arg4 = "pop125"
+# if len(sys.argv) == 3:
+#     time = int(sys.argv[2])
+# else:
+#     time = 500
+#
+# if len(sys.argv) == 4:
+#     gff_file = sys.argv[3]
+#     annotate = True
+# else:
+#     annotate = False
+time = 500
+annotate = False
 
 f = open(vaf_file)
 F, variants = read_F(f)
@@ -96,7 +117,10 @@ for i in range(0, len(lines)):
     loci[str(i + 1)] = line.strip()
 f.close()
 
-parents, score, variants1, removed_variants, num_times, running_time, removed_time_points, F1, R1, order = predict(F, variants, 1, R)
+parents, score, variants1, removed_variants, num_times, running_time, removed_time_points, F1, R1, order = predict(F,
+                                                                                                                   variants,
+                                                                                                                   1, R,
+                                                                                                                   k=k)
 
 f = open(prefix + ".tree", "w")
 write_parents(variants1, parents, f)

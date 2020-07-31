@@ -74,7 +74,8 @@ def cluster_data(F, R, variants, threshold):
         for j in range(0, len(clusters)):
             (header, column, r_column) = clusters[j]
             if diff_below_cutoff(F_t[i], column, threshold):
-                clusters[j] = (header + "_" + str_variants[i], average_column(F_t[i], column), average_column(R_t[i], r_column))
+                clusters[j] = (
+                header + "_" + str_variants[i], average_column(F_t[i], column), average_column(R_t[i], r_column))
                 new_cluster = False
                 break
         if new_cluster:
@@ -179,7 +180,7 @@ def tree_score(F, S, order, parents, arrival_times, upto):
     return final_score, final_penalty
 
 
-def new_algorithm(F, R):
+def new_algorithm(F, R, k=0):
     # Empty check
     if len(F) == 0:
         return [], -1, []  # parents_vector, score
@@ -193,15 +194,50 @@ def new_algorithm(F, R):
 
     # Get the step structure of the step matrix
     steps, arrival_times = get_step_structure(my_F)
+    steps = correct_steps_for_known_founders(steps, k)
 
     parents = {}
     for clone in range(1, num_clones):
         parents[clone] = -1
+
     order = list(range(0, num_clones))
     final_score = one
     final_penalty = zero
     clone_counter = 1
-    for step_counter in range(1, len(steps)):
+    starting_step = 1
+
+    if k > 0:
+        for i in range(0, k):
+            parents[i + 1] = 0
+        if k > 1:
+            G, vertices = get_partial_order(my_F, [steps[1][0], steps[1][-1]])
+            ts = topological_sort(G, vertices)
+            order = [0] + ts + list(range(steps[1][-1] + 1, num_clones))
+            score, penalty = tree_score(my_F, my_S, order, parents, arrival_times, steps[1][-1])
+            max_score = score
+            max_penalty = penalty
+            max_order = order
+            for i in range(0, len(ts)):
+                for j in range(0, i):
+                    new_ts = ts[:]
+                    new_ts.remove(ts[i])
+                    new_ts.insert(j, ts[i])
+                    temp_order = [0] + new_ts + list(range(steps[1][-1] + 1, num_clones))
+                    temp_score, temp_penalty = tree_score(my_F, my_S, temp_order, parents, arrival_times, i + 1)
+                    if (temp_score + temp_penalty) > (max_score + max_penalty):
+                        max_score = temp_score
+                        max_penalty = temp_penalty
+                        max_order = temp_order
+            order = max_order[:]
+            final_score = max_score
+            final_penalty = max_penalty
+            clone_counter = steps[1][-1] + 1
+            starting_step = 2
+        else:
+            clone_counter = 2
+            starting_step = 2
+
+    for step_counter in range(starting_step, len(steps)):
         step = steps[step_counter]
         if len(step) == 1:
             clone = order[clone_counter]
@@ -271,7 +307,7 @@ def valid_parent_value(parents, F, fail_threshold):
 
 
 def valid_parent_order(order_validity, parents):
-    cur_variant = len(parents)-1
+    cur_variant = len(parents) - 1
     cur_path = deepcopy(order_validity[cur_variant])
     temp = parents[cur_variant]
     while temp != 0:
@@ -322,7 +358,7 @@ def smart_predict_original(F, m, fail_threshold, clones=[], S=[]):
         C_row = c_row(my_F[i], chosen_parents)
         next_choices = list((np.array(C_row)).argsort())
         for next_choice in next_choices:
-            if C_row[next_choice] > fail_threshold and next_choice <= i and next_choice in valid_parents[i+1]:
+            if C_row[next_choice] > fail_threshold and next_choice <= i and next_choice in valid_parents[i + 1]:
                 temp = chosen_parents[:]
                 temp.append(next_choice)
                 choices_stack.append(temp)
@@ -335,7 +371,7 @@ def smart_predict_original(F, m, fail_threshold, clones=[], S=[]):
 
     p = one
     for i in range(1, m):
-        p = p * C[i-1][chosen_parents[i]]
+        p = p * C[i - 1][chosen_parents[i]]
     return C, my_F, chosen_parents, p
 
 
@@ -416,7 +452,7 @@ def smart_predict_penalty(F, m, fail_threshold, clones=[], S=[]):
 
     p = one
     for i in range(1, m):
-        p = p * C[i-1][chosen_parents[i]]
+        p = p * C[i - 1][chosen_parents[i]]
     return C, my_F, chosen_parents, p
 
 
@@ -471,7 +507,7 @@ def old_algorithm(F, R, smart_predict_algo):
         return [], -1
 
 
-def predict(F, variants, algo, R=[], filter=True):
+def predict(F, variants, algo, R=[], filter=True, k=0):
     start = process_time()
     if len(R) == 0:
         R = [[Decimal(sys.maxsize) for _ in range(len(F[0]))] for _ in range(len(F))]
@@ -494,7 +530,7 @@ def predict(F, variants, algo, R=[], filter=True):
         if algo == 0:
             parents, score = old_algorithm(F2, R2, smart_predict_original)
         elif algo == 1:
-            parents, score, order = new_algorithm(F2, R2)
+            parents, score, order = new_algorithm(F2, R2, k)
         elif algo == 2:
             parents, score = old_algorithm(F2, R2, smart_predict_penalty)
         else:
@@ -504,4 +540,4 @@ def predict(F, variants, algo, R=[], filter=True):
         score = zero
     end = process_time()
 
-    return parents, score, variants1, removed_variants, len(F2), end-start, removed_time_points, F1, R1, order
+    return parents, score, variants1, removed_variants, len(F2), end - start, removed_time_points, F1, R1, order

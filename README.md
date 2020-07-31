@@ -8,19 +8,23 @@
 ## Installation: 
 git clone https://github.com/COL-IU/ClonalTREE2.git
 
+## Preprocessing: 
+**Note:** You can use scripts provided here, or use your own methods to generate the required input files.
+- Preprocessing involves the following: 1) Aligning the FASTQ reads to a reference genome, 2) variant calling and 3) estimating the variant allele frequencies and compiling the information into the file format readable by ClonalTREE2. The formats are explained at the end of this README file. 
+- Before running the script (pipeline.sh) for preprocessing, make sure the FASTQ files are gzipped and named in the following format: projectname_timetag_1.fq.gz, projectname_timetag_2.fq.gz. Also make changes to the file path variables and the timetags array appropriately in pipeline.sh. 
+- Run pipeline.sh from Unix command prompt as follows:
+```
+pipeline.sh projectname
+```
+
 ## Running the program: 
-
-Part 1 - Aligning the FASTQ reads, variant calling and compilation of information in ClonalTREE2 recognizable formats*:
-1) Make sure the FASTQ files are gzipped and named in the following format: projectname_timetag_1.fq.gz, projectname_timetag_2.fq.gz
-2) Make changes to the file path variables and the timetags array appropriately in pipeline.sh
-3) Run: pipeline.sh projectname
-
-Part 2 - Running ClonalTREE2
-1) Run: python3 ClonalTREE2.py \<prefix\> \<optional: generations\> \<optional: GFF annotation\>\
-    where
-    - \<prefix\> is the file path (and name) prefix for the input and the output files. The input files required are \<prefix\>.vaf, \<prefix\>.rd and \<prefix\>.var which are described below. The output files are \<prefix\>.F, \<prefix\>.R, \<prefix\>.C, \<prefix\>.tree, \<prefix\>.dot, \<prefix\>.info.
-    - \<optional: generations\> is an integer number of generations between any two time points. It is used for the statistical test for significance of the selective trends in clonal frequencies. This parameter is optional.
-    - \<optional: GFF annotation\> is the file path to a GFF file corresponding to the reference genome. This is used to annotate the clones in the clonal tree. This parameter is optional.
+Run ClonalTREE2.py from Unix command prompt as follows: 
+```
+python3 ClonalTREE2.py <prefix> <optional: k>
+```
+where
+- \<prefix\> is the file path (and name) prefix for the input and the output files. The input files required are \<prefix\>.vaf, \<prefix\>.rd and \<prefix\>.var which are described below. The output files are \<prefix\>.F, \<prefix\>.R, \<prefix\>.C, \<prefix\>.tree, \<prefix\>.dot, \<prefix\>.info.
+- \<optional: k\> is an integer argument. The first k variants/columns will be considered as founders.
   
 ## Input files:
 1) \<prefix\>.vaf - variant allele frequencies matrix (F): First row should be space separated names of mutations that are column headers of the F matrix, which also will appear as node names in the inferred clonal tree. The subsequent rows should contain the allele frequencing of each mutation in the same order as the column headers, and the rows ordered by time points. 

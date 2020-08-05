@@ -24,7 +24,7 @@ python3 ClonalTREE2.py <prefix> <optional: k>
 ```
 where
 - \<prefix\> is the file path (and name) prefix for the input and the output files. The input files required are \<prefix\>.vaf, \<prefix\>.rd and \<prefix\>.var which are described below. The output files are \<prefix\>.F, \<prefix\>.R, \<prefix\>.C, \<prefix\>.tree, \<prefix\>.dot, \<prefix\>.info.
-- \<optional: k\> is an integer argument. The first k variants/columns will be considered as founders.
+- \<optional: k\> is an integer argument. The first k variants/columns will be considered as founders. (Default: 0)
   
 ## Input files:
 1) \<prefix\>.vaf - variant allele frequencies matrix (F): First row should be space separated names of mutations that are column headers of the F matrix, which also will appear as node names in the inferred clonal tree. The subsequent rows should contain the allele frequencing of each mutation in the same order as the column headers, and the rows ordered by time points. 
